@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Movie Review Sentiment Analyzer</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: #f4f6f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    background: #ffffff;
+    padding: 30px;
+    width: 300px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1e40af;
+}
+
+.loader {
+    display: none;
+    text-align: center;
+    margin-top: 15px;
+    font-weight: 600;
+}
+
+.summary {
+    margin-top: 25px;
+    display: none;
+}
+
+.card {
+    margin-bottom: 12px;
+}
+
+.label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+}
+
+.bar {
+    background: #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 12px;
+    margin-top: 6px;
+}
+
+.fill {
+    height: 100%;
+    width: 0;
+    transition: width 1s ease;
+}
+
+.positive { background: #22c55e; }
+.negative { background: #ef4444; }
+.uncertain { background: #f59e0b; }
+
+.chart-container {
+    margin-top: 25px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>🎬 Movie Sentiment Analyzer</h2>
+
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept=".csv" required>
+        <button type="submit">Analyze Reviews</button>
+    </form>
+
+    <div class="loader" id="loader">⏳ Analyzing reviews...</div>
+
+    <div class="summary" id="summary">
+
+        <!-- Progress Bars -->
+        <div class="card">
+            <div class="label">
+                <span>Positive</span><span id="posText"></span>
+            </div>
+            <div class="bar"><div class="fill positive" id="posBar"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="label">
+                <span>Negative</span><span id="negText"></span>
+            </div>
+            <div class="bar"><div class="fill negative" id="negBar"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="label">
+                <span>Uncertain</span><span id="uncText"></span>
+            </div>
+            <div class="bar"><div class="fill uncertain" id="uncBar"></div></div>
+        </div>
+
+        <!-- Pie Chart -->
+        <div class="chart-container">
+            <canvas id="sentimentChart"></canvas>
+        </div>
+
+    </div>
+</div>
+
+<script>
+let chart;
+
+document.getElementById("uploadForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) return;
+
+    document.getElementById("loader").style.display = "block";
+    document.getElementById("summary").style.display = "none";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("/predict-file-download", {
+        method: "POST",
+        body: formData
+    });
+
+    const pos = parseFloat(response.headers.get("X-Positive-Percentage"));
+    const neg = parseFloat(response.headers.get("X-Negative-Percentage"));
+    const unc = parseFloat(response.headers.get("X-Uncertain-Percentage"));
+
+    // Text
+    document.getElementById("posText").innerText = pos + "%";
+    document.getElementById("negText").innerText = neg + "%";
+    document.getElementById("uncText").innerText = unc + "%";
+
+    // Bars
+    document.getElementById("posBar").style.width = pos + "%";
+    document.getElementById("negBar").style.width = neg + "%";
+    document.getElementById("uncBar").style.width = unc + "%";
+
+    // Pie Chart
+    if (chart) chart.destroy();
+    chart = new Chart(document.getElementById("sentimentChart"), {
+        type: "pie",
+        data: {
+            labels: ["Positive", "Negative", "Uncertain"],
+            datasets: [{
+                data: [pos, neg, unc],
+                backgroundColor: ["#22c55e", "#ef4444", "#f59e0b"]
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+
+    document.getElementById("loader").style.display = "none";
+    document.getElementById("summary").style.display = "block";
+
+    // Auto-download CSV
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "reviews_with_sentiment.csv";
+    a.click();
+});
+</script>
+
+</body>
+</html>
