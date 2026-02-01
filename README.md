@@ -64,24 +64,17 @@ Hugging Face Transformers
 
 PyTorch
 
+Project Structure
 
 
-
-
-🏗️ Project Structure
 ├── app.py                  # FastAPI backend
-|
 ├── Dockerfile              # Docker configuration
-|
 ├── requirements.txt        # Python dependencies
-|
 ├── sentiment_finetuned_v2/ # Fine-tuned transformer model
-|
 ├── templates/
-|   |
 │   └── index.html          # Frontend UI
-|
 ├── README.md               # Project documentation
+
 
 
 📄 Input File Format
