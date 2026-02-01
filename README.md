@@ -38,3 +38,21 @@ NEGATIVE
 UNCERTAIN (low confidence predictions)
 
 Framework: Hugging Face Transformers + PyTorch
+
+🏗️ Project Structure
+├── app.py                 # FastAPI backend
+├── Dockerfile             # Docker configuration
+├── requirements.txt       # Python dependencies
+├── sentiment_finetuned_v2 # Fine-tuned model
+├── templates/
+│   └── index.html         # Frontend UI
+├── README.md              # Project documentation
+
+
+#Input File Format
+
+reviews
+first-review
+second-review
+.......
+
